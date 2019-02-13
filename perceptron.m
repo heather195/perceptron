@@ -4,68 +4,64 @@ x1 = input(:,1);
 x2 = input(:,2);
 y = input(:,3);
 
-w0 = rand();
-w1 = rand();
-w2 = rand();
+w0 = -10+rand()*(10-(-10));
+w1 = -10+rand()*(10-(-10));
+w2 = -10+rand()*(10-(-10));
 w = [w0; w1; w2];
 b = 1;
-bestw = w;
-besterr = length(x2);
+bestw = w; % pocket
+most_correct = 0;
 
 maxx1 = max(x1);
 maxx2 = max(x2);
 maxes = ceil(max(maxx1, maxx2));
 
+plotBoth(w,x1,x2,y,maxes);
+
 its = 1;
-MAX_ITS = 3000;
+MAX_ITS = 500;
 err = 1;
 while(its < MAX_ITS && err > 0)
     err = 0;
+    founderr = false;
     for z=1:length(x2)
         x = [b; x1(z);x2(z)];
-        if sign(w'*x)~=y(z)
-            err=err+1;
+        %disp("round " + z + ": calculated = " + sign(w'*x) + "; expected = " + y(z));
+        %disp(w);
+        s = sign(w'*x);
+        if s~=y(z)
+            founderr = true;
+            err = err+1;
             w(1) = w(1)+b*y(z);
             w(2) = w(2)+x1(z)*y(z);
             w(3) = w(3)+x2(z)*y(z);
+            %disp("record " + z + "err: " + err);
+        end
+        if founderr
+            break
         end
     end
+    
+    correct = checkClassification(w,x1,x2,y);
+    
+    if correct > most_correct
+        disp("Reached here")
+        most_correct = correct;
+        bestw = w;
+    end
+    %{
+    if(mod(its, 100)==0)
+        plotBoth(w,x1,x2,y,maxes);
+    end
+    %}
     its=its+1;
-    %disp(w);
-end 
+end
+
+% Create final graph
 disp(w);
 plotBoth(w,x1,x2,y,maxes);
 
-%{
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%% PLOTTING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-m = -(w(1)/w(3))/(w(1)/w(2));
-int = -w(1)/w(3);
+% Create pocket graph
+disp(bestw);
+plotBoth(bestw,x1,x2,y,maxes);
 
-plotx = zeros([1,maxes]);
-ploty = zeros([1,maxes]);
-
-hold on;
-for k=1:maxes
-   ploty(k) = (m*k) + int 
-   plotx(k) = k
-end
-
-figure;
-grid;
-plot(plotx, ploty);
-hold on;
-
-for i=1:length(x2)
-    %Select color
-    if y(i)<0
-        mycolor = 'r';
-    else
-        mycolor = 'g';
-    end
-    scatter(x1(i),x2(i), mycolor) % graphs all the data points
-end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%}
